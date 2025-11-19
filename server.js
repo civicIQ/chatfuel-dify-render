@@ -115,20 +115,15 @@ app.post("/chatfuel", async (req, res) => {
       userId
     )}/send`;
 
-    // We send: chatfuel_token,
-    //   chatfuel_block_id  -> block that prints {{dify_answer}}
-    //   dify_answer        -> used inside that block
-    //   dify_conversation_id -> keep Dify context
-    await axios.post(broadcastUrl, null, {
-      params: {
+    await axios.get(broadcastUrl, {
+    params: {
         chatfuel_token: CHATFUEL_TOKEN,
         chatfuel_block_id: CHATFUEL_ANSWER_BLOCK_ID,
         dify_answer: ans,
         dify_conversation_id: nextConversationId
-      },
-      timeout: 10000
-    });
-
+    },
+    timeout: 10000
+});
     console.log("Sent final answer via Chatfuel broadcast", {
       userId,
       nextConversationId
