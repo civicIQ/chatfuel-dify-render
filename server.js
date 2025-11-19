@@ -115,15 +115,24 @@ app.post("/chatfuel", async (req, res) => {
       userId
     )}/send`;
 
-    await axios.get(broadcastUrl, {
-    params: {
-        chatfuel_token: CHATFUEL_TOKEN,
-        chatfuel_block_id: CHATFUEL_ANSWER_BLOCK_ID,
+    await axios.post(
+    broadcastUrl,
+    {
+        // Body: attributes to set for this user
         dify_answer: ans,
         dify_conversation_id: nextConversationId
     },
-    timeout: 10000
-});
+    {
+        params: {
+        chatfuel_token: CHATFUEL_TOKEN,
+        chatfuel_block_id: CHATFUEL_ANSWER_BLOCK_ID
+        },
+        headers: {
+        "Content-Type": "application/json"
+        },
+        timeout: 10000
+    }
+  );
     console.log("Sent final answer via Chatfuel broadcast", {
       userId,
       nextConversationId
