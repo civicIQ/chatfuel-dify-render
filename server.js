@@ -1,0 +1,147 @@
+// server.js
+const express = require("express");
+const axios = require("axios");
+
+const app = express();
+app.use(express.json());
+
+// --- ENV VARS ---
+const DIFY_API_KEY = process.env.DIFY_API_KEY;
+const CHATFUEL_BOT_ID = process.env.CHATFUEL_BOT_ID;
+const CHATFUEL_TOKEN = process.env.CHATFUEL_TOKEN;
+const CHATFUEL_ANSWER_BLOCK_ID = process.env.CHATFUEL_ANSWER_BLOCK_ID;
+
+if (!DIFY_API_KEY) {
+  console.warn("DIFY_API_KEY is not set");
+}
+if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN || !CHATFUEL_ANSWER_BLOCK_ID) {
+  console.warn("Chatfuel broadcast env vars are not fully set");
+}
+
+// Health check 
+app.get("/", (req, res) => {
+  res.send("Chatfuel ↔ Dify Render bridge is running.");
+});
+
+// Main endpoint that Chatfuel JSON API will call
+app.post("/chatfuel", async (req, res) => {
+  // Read input from Chatfuel
+  const rawText =
+    (req.body && (req.body.user_text || req.body["chatfuel user input"])) || "";
+  const userText = String(rawText).trim();
+
+  let conversationId = (req.body && req.body.dify_conversation_id) || null;
+  if (
+    !conversationId ||
+    String(conversationId).trim() === "" ||
+    String(conversationId).toLowerCase() === "null"
+  ) {
+    conversationId = null;
+  }
+
+  const userId =
+    (req.body &&
+      (req.body.chatfuel_user_id || req.body.messenger_user_id)) ||
+    null;
+
+  const extraInputs = (req.body && req.body.inputs) || {};
+  const inputs = { from_channel: "chatfuel", ...extraInputs };
+
+  // Immediate response so Chatfuel doesn't show an error after 10s
+  if (!userText) {
+    return res.json({
+      messages: [
+        {
+          text:
+            "I didn’t get any text to send to the AI. Please type your question again 😊"
+        }
+      ]
+    });
+  }
+
+  // Fast "working on it" message 
+  res.json({
+    messages: [
+      {
+        text:
+          "Got it! I’m working on your answer now ⏳ I’ll send it here as soon as it’s ready."
+      }
+    ]
+  });
+
+  // If we don't have a userId, we can't push later
+  if (!userId) {
+    console.warn("Missing userId, can't send follow-up via broadcast.");
+    return;
+  }
+
+  // 3) Continue in the background: call Dify
+  try {
+    const payload = {
+      query: userText,
+      response_mode: "blocking", // full answer, not streaming
+      user: String(userId),
+      inputs
+    };
+    if (conversationId) payload.conversation_id = conversationId;
+
+    const dfy = await axios.post(
+      "https://api.dify.ai/v1/chat-messages",
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${DIFY_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        timeout: 60000 // up to 60s for Dify here
+      }
+    );
+
+    const ans =
+      dfy.data?.answer ??
+      dfy.data?.outputs?.text ??
+      "No answer returned from Dify.";
+    const nextConversationId = dfy.data?.conversation_id || conversationId || "";
+
+    // Push final answer back to user using Chatfuel Broadcast API
+    if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN || !CHATFUEL_ANSWER_BLOCK_ID) {
+      console.warn(
+        "Chatfuel broadcast env vars missing; can't send final answer."
+      );
+      return;
+    }
+
+    const broadcastUrl = `https://api.chatfuel.com/bots/${CHATFUEL_BOT_ID}/users/${encodeURIComponent(
+      userId
+    )}/send`;
+
+    // We send: chatfuel_token,
+    //   chatfuel_block_id  -> block that prints {{dify_answer}}
+    //   dify_answer        -> used inside that block
+    //   dify_conversation_id -> keep Dify context
+    await axios.post(broadcastUrl, null, {
+      params: {
+        chatfuel_token: CHATFUEL_TOKEN,
+        chatfuel_block_id: CHATFUEL_ANSWER_BLOCK_ID,
+        dify_answer: ans,
+        dify_conversation_id: nextConversationId
+      },
+      timeout: 10000
+    });
+
+    console.log("Sent final answer via Chatfuel broadcast", {
+      userId,
+      nextConversationId
+    });
+  } catch (err) {
+    console.error(
+      "Error in background Dify/Broadcast flow:",
+      err?.message || err
+    );
+  }
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
