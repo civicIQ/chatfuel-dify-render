@@ -101,14 +101,16 @@ app.post("/chatfuel", async (req, res) => {
     if (!text) return text;
 
     let result = text;
+    result = result.replace(/^[\*\-]\s+/gm, "• ");
+    result = result.replace(/\*\*(.*?)\*\*/g, "$1"); 
+    result = result.replace(/\*(.*?)\*/g, "$1");     
+    result = result.replace(/_(.*?)_/g, "$1");       
+    result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)");
+    result = result.trim();
 
-    result = result.replace(/\*\*(.*?)\*\*/g, "$1");
-    result = result.replace(/\*(.*?)\*/g, "$1");
-    result = result.replace(/^- /gm, "• ");
-    result = result.replace(/\n{3,}/g, "\n\n");
-    
     return result;
     }
+
 
     const rawAns =
     dfy.data?.answer ??
