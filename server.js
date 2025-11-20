@@ -96,6 +96,18 @@ app.post("/chatfuel", async (req, res) => {
         timeout: 60000 // up to 60s for Dify here
       }
     );
+    function toUnicodeBold(str) {
+    const normal = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const bold   = "𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳" +
+                    "𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙" +
+                    "𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗";
+
+    return str.split("").map(ch => {
+    const index = normal.indexOf(ch);
+    return index >= 0 ? bold[index] : ch;
+    }).join("");
+    }
+
 
     function formatForMessenger(text) {
     if (!text) return text;
@@ -103,7 +115,7 @@ app.post("/chatfuel", async (req, res) => {
     let result = text;
     const INDENT = "\u2003\u2003"; 
     result = result.replace(/^[\*\-]\s+/gm, `${INDENT}• `);
-    result = result.replace(/\*\*(.*?)\*\*/g, "$1"); 
+    result = result.replace(/\*\*(.*?)\*\*/g, (_, inner) => toUnicodeBold(inner));
     result = result.replace(/\*(.*?)\*/g, "$1");     
     result = result.replace(/_(.*?)_/g, "$1");       
     result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)");
