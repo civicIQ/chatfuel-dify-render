@@ -101,7 +101,8 @@ app.post("/chatfuel", async (req, res) => {
     if (!text) return text;
 
     let result = text;
-    result = result.replace(/^[\*\-]\s+/gm, "• ");
+    const INDENT = "\u2003\u2003"; 
+    result = result.replace(/^[\*\-]\s+/gm, `${INDENT}• `);
     result = result.replace(/\*\*(.*?)\*\*/g, "$1"); 
     result = result.replace(/\*(.*?)\*/g, "$1");     
     result = result.replace(/_(.*?)_/g, "$1");       
