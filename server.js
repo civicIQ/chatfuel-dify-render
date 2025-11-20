@@ -169,9 +169,14 @@ app.post("/chatfuel", async (req, res) => {
       nextConversationId
     });
   } catch (err) {
+    const status = err?.response?.status;
+    const data = err?.response?.data;
+    const url = err?.config?.url;
     console.error(
       "Error in background Dify/Broadcast flow:",
-      err?.message || err
+    status,
+    url,
+    typeof data === "string" ? data : JSON.stringify(data)
     );
   }
 });
