@@ -97,10 +97,26 @@ app.post("/chatfuel", async (req, res) => {
       }
     );
 
-    const ans =
-      dfy.data?.answer ??
-      dfy.data?.outputs?.text ??
-      "No answer returned from Dify.";
+    function formatForMessenger(text) {
+    if (!text) return text;
+
+    let result = text;
+
+    result = result.replace(/\*\*(.*?)\*\*/g, "$1");
+    result = result.replace(/\*(.*?)\*/g, "$1");
+    result = result.replace(/^- /gm, "• ");
+    result = result.replace(/\n{3,}/g, "\n\n");
+    
+    return result;
+    }
+
+    const rawAns =
+    dfy.data?.answer ??
+    dfy.data?.outputs?.text ??
+    "No answer returned from Dify.";
+
+    const ans = formatForMessenger(rawAns);
+
     const nextConversationId = dfy.data?.conversation_id || conversationId || "";
 
     // Push final answer back to user using Chatfuel Broadcast API
