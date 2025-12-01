@@ -89,8 +89,7 @@ app.get("/", (req, res) => {
 
 //Main endpoint that Chatfuel JSON API will call
 app.post("/chatfuel", async (req, res) => {
-
-  //Read input from Chatfuel
+  //read input from Chatfuel
   const rawText =
     (req.body && (req.body.user_text || req.body["chatfuel user input"])) || "";
   const userText = String(rawText).trim();
@@ -113,46 +112,43 @@ app.post("/chatfuel", async (req, res) => {
   const extraInputs = (req.body && req.body.inputs) || {};
   const inputs = { from_channel: "chatfuel", ...extraInputs };
 
-  //messages are longer  
+  //immediate response so Chatfuel doesn't show timeout
   res.json({
     messages: [
       {
-        text:
-          "Thinking… I'll reply shortly!"
+        text: "Thinking… I'll reply shortly!"
       }
     ]
   });
 
-  //If we don't have a userId, we can't push later
+  //if we don't have a userId, we can't push later
   if (!userId) {
     console.warn("Missing userId, can't send follow-up via broadcast.");
     return;
   }
 
-  //Continue in the background: call Dify
+  //call Dify
   try {
-    
     const payload = {
-        query: userText,
-        response_mode: "blocking", //full answer
-        user: String(userId),
-        inputs
+      query: userText,
+      response_mode: "blocking", //full answer
+      user: String(userId),
+      inputs
     };
     if (conversationId) payload.conversation_id = conversationId;
 
-    //there is no converstion id in dify 
     const dfy = await callDifyWithFallback(payload, conversationId);
 
     const rawAns =
-    dfy.data?.answer ??
-    dfy.data?.outputs?.text ??
-    "No answer returned from Dify.";
+      dfy.data?.answer ??
+      dfy.data?.outputs?.text ??
+      "No answer returned from Dify.";
 
     const ans = formatForMessenger(rawAns);
 
     const nextConversationId = dfy.data?.conversation_id || conversationId || "";
 
-    //Push final answer back to user using Chatfuel Broadcast API
+    //push final answer back to user
     if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN || !CHATFUEL_ANSWER_BLOCK_ID) {
       console.warn(
         "Chatfuel broadcast env vars missing; can't send final answer."
@@ -164,40 +160,47 @@ app.post("/chatfuel", async (req, res) => {
       userId
     )}/send`;
 
-    await axios.post(
-    broadcastUrl,
-    {
-        //attributes to set for this user
+    const broadcastResp = await axios.post(
+      broadcastUrl,
+      {
         dify_answer: ans,
         dify_conversation_id: nextConversationId
-    },
-    {
+      },
+      {
         params: {
-        chatfuel_token: CHATFUEL_TOKEN,
-        chatfuel_block_id: CHATFUEL_ANSWER_BLOCK_ID
+          chatfuel_token: CHATFUEL_TOKEN,
+          chatfuel_block_id: CHATFUEL_ANSWER_BLOCK_ID
         },
         headers: {
-        "Content-Type": "application/json"
+          "Content-Type": "application/json"
         },
         timeout: 10000
-    }
-  );
-    console.log("Sent final answer via Chatfuel broadcast", {
-      userId,
-      nextConversationId
-    });
+      }
+    );
+
+    console.log(
+      "Sent final answer via Chatfuel broadcast",
+      {
+        userId,
+        nextConversationId
+      },
+      "Chatfuel response:",
+      broadcastResp.status,
+      JSON.stringify(broadcastResp.data)
+    );
   } catch (err) {
     const status = err?.response?.status;
     const data = err?.response?.data;
     const url = err?.config?.url;
     console.error(
       "Error in background Dify/Broadcast flow:",
-    status,
-    url,
-    typeof data === "string" ? data : JSON.stringify(data)
+      status,
+      url,
+      typeof data === "string" ? data : JSON.stringify(data)
     );
   }
 });
+
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
