@@ -164,7 +164,7 @@ app.post("/chatfuel", async (req, res) => {
     };
     if (conversationId) payload.conversation_id = conversationId;
 
-    //Use the helper that retries without conversation_id if Dify says "not_found"
+    //there is no converstion id in dify 
     const dfy = await callDifyWithFallback(payload, conversationId);
 
     const rawAns =
