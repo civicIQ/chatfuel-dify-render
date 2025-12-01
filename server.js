@@ -113,30 +113,6 @@ app.post("/chatfuel", async (req, res) => {
   const extraInputs = (req.body && req.body.inputs) || {};
   const inputs = { from_channel: "chatfuel", ...extraInputs };
 
-  //edge case: empty message
-  if (!userText) {
-    return res.json({
-      messages: [
-        {
-          text:
-            "Oops, I didn’t catch that. Could you type your question again?"
-        }
-      ]
-    });
-  }
-
-  //edge case: short greetings
-  const greetings = ["hi", "hello", "hey", "good morning", "good afternoon"];
-  if (greetings.includes(userText.toLowerCase())) {
-    return res.json({
-      messages: [
-        {
-          text: "Hello! How can I help you today?"
-        }
-      ]
-    });
-  }
-
   //messages are longer  
   res.json({
     messages: [
