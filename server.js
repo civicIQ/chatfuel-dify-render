@@ -46,7 +46,7 @@ async function callDifyWithFallback(payload, conversationId) {
         Authorization: `Bearer ${DIFY_API_KEY}`,
         "Content-Type": "application/json"
       },
-      timeout: 60000
+      timeout: 120000
     });
   } catch (err) {
     //validating response
