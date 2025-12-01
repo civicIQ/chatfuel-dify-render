@@ -37,34 +37,22 @@ function formatForMessenger(text) {
   return result.trim();
 }
 
-//split long text into chunks
-function splitIntoChunks(text, maxLen = 640) {
-  const parts = [];
-  let current = "";
+//split into chunks for larger answers
+function splitIntoChunks(message, size = 1500) {
+  const chunks = [];
+  let remaining = message;
 
-  for (const paragraph of text.split("\n\n")) {
-    const chunk = paragraph.trim();
-    if (!chunk) continue;
+  while (remaining.length > size) {
+    let cutIndex = remaining.lastIndexOf("\n", size);
+    if (cutIndex === -1) cutIndex = size;
 
-    if (chunk.length > maxLen) {
-      let start = 0;
-      while (start < chunk.length) {
-        parts.push(chunk.slice(start, start + maxLen));
-        start += maxLen;
-      }
-      continue;
-    }
-
-    if ((current + "\n\n" + chunk).length > maxLen) {
-      if (current) parts.push(current.trim());
-      current = chunk;
-    } else {
-      current = current ? current + "\n\n" + chunk : chunk;
-    }
+    chunks.push(remaining.slice(0, cutIndex).trim());
+    remaining = remaining.slice(cutIndex).trim();
   }
 
-  if (current) parts.push(current.trim());
-  return parts;
+  if (remaining.length > 0) chunks.push(remaining);
+
+  return chunks;
 }
 
 async function callDifyWithFallback(payload, conversationId) {
@@ -189,7 +177,7 @@ app.post("/chatfuel", async (req, res) => {
       userId
     )}/send`;
 
-    const chunks = splitIntoChunks(ans, 600);
+    const chunks = splitIntoChunks(ans, 1500);
     console.log(
       "About to broadcast answer",
       {
