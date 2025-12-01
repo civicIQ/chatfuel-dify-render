@@ -38,7 +38,7 @@ function formatForMessenger(text) {
 }
 
 //split long text into chunks
-function splitIntoChunks(text, maxLen = 600) {
+function splitIntoChunks(text, maxLen = 640) {
   const parts = [];
   let current = "";
 
