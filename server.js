@@ -37,6 +37,35 @@ function formatForMessenger(text) {
   return result.trim();
 }
 
+//split long text into chunks
+function splitIntoChunks(text, maxLen = 600) {
+  const parts = [];
+  let current = "";
+
+  for (const paragraph of text.split("\n\n")) {
+    const chunk = paragraph.trim();
+    if (!chunk) continue;
+
+    if (chunk.length > maxLen) {
+      let start = 0;
+      while (start < chunk.length) {
+        parts.push(chunk.slice(start, start + maxLen));
+        start += maxLen;
+      }
+      continue;
+    }
+
+    if ((current + "\n\n" + chunk).length > maxLen) {
+      if (current) parts.push(current.trim());
+      current = chunk;
+    } else {
+      current = current ? current + "\n\n" + chunk : chunk;
+    }
+  }
+
+  if (current) parts.push(current.trim());
+  return parts;
+}
 
 async function callDifyWithFallback(payload, conversationId) {
   try {
@@ -131,7 +160,7 @@ app.post("/chatfuel", async (req, res) => {
   try {
     const payload = {
       query: userText,
-      response_mode: "blocking", //full answer
+      response_mode: "blocking", 
       user: String(userId),
       inputs
     };
@@ -160,34 +189,48 @@ app.post("/chatfuel", async (req, res) => {
       userId
     )}/send`;
 
-    const broadcastResp = await axios.post(
-      broadcastUrl,
+    const chunks = splitIntoChunks(ans, 600);
+    console.log(
+      "About to broadcast answer",
       {
-        dify_answer: ans,
-        dify_conversation_id: nextConversationId
-      },
-      {
-        params: {
-          chatfuel_token: CHATFUEL_TOKEN,
-          chatfuel_block_id: CHATFUEL_ANSWER_BLOCK_ID
-        },
-        headers: {
-          "Content-Type": "application/json"
-        },
-        timeout: 10000
+        userId,
+        nextConversationId,
+        totalLength: ans.length,
+        chunks: chunks.length
       }
     );
 
-    console.log(
-      "Sent final answer via Chatfuel broadcast",
-      {
-        userId,
-        nextConversationId
-      },
-      "Chatfuel response:",
-      broadcastResp.status,
-      JSON.stringify(broadcastResp.data)
-    );
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const broadcastResp = await axios.post(
+        broadcastUrl,
+        {
+          dify_answer: chunk,
+          dify_conversation_id: nextConversationId
+        },
+        {
+          params: {
+            chatfuel_token: CHATFUEL_TOKEN,
+            chatfuel_block_id: CHATFUEL_ANSWER_BLOCK_ID
+          },
+          headers: {
+            "Content-Type": "application/json"
+          },
+          timeout: 10000
+        }
+      );
+
+      console.log(
+        `Sent chunk ${i + 1}/${chunks.length} via Chatfuel broadcast`,
+        {
+          userId,
+          nextConversationId
+        },
+        "Chatfuel response:",
+        broadcastResp.status,
+        JSON.stringify(broadcastResp.data)
+      );
+    }
   } catch (err) {
     const status = err?.response?.status;
     const data = err?.response?.data;
