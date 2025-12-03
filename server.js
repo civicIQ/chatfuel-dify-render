@@ -26,12 +26,12 @@ function formatForMessenger(text) {
   const INDENT = "\u2003\u2003"; // two EM spaces
   result = result.replace(/^[\*\-]\s+/gm, `${INDENT}• `);
 
-  // **bold** -> *bold*  (Messenger bold)
-  result = result.replace(/\*\*(.+?)\*\*/g, "*$1*");
-
-  // *italic* -> _italic_ (Messenger italic)
+  // 1) convert *italic* -> _italic_
   result = result.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1_$2_");
 
+  // 2) then convert **bold** -> *bold*
+  result = result.replace(/\*\*(.+?)\*\*/g, "*$1*");  
+  
   // [label](url) -> label (url)
   result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)");
   result = result.replace(/ +\n/g, "\n");
