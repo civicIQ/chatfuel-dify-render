@@ -26,17 +26,11 @@ function formatForMessenger(text) {
   const INDENT = "\u2003\u2003"; // two EM spaces
   result = result.replace(/^[\*\-]\s+/gm, `${INDENT}• `);
 
-  // bold text
+  // **bold** -> *bold*  (Messenger bold)
   result = result.replace(/\*\*(.+?)\*\*/g, "*$1*");
 
-  // italic text
+  // *italic* -> _italic_ (Messenger italic)
   result = result.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1_$2_");
-  // ~~text~~ -> text natively in messenger
-
-  result = result.replace(/\*(.*?)\*/g, "$1");     
-
-  // underline text
-  result = result.replace(/_(.*?)_/g, "$1");       
 
   // [label](url) -> label (url)
   result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)");
