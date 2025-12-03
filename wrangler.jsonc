@@ -1,5 +1,5 @@
 {
-    "name": "chatfuel-dify-render",
+    "name": "dify-server",
     "main": "server.js",
     "compatibility_date": "2025-09-01",
     "compatibility_flags": [
