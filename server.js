@@ -47,14 +47,16 @@ function splitIntoChunks(message, size = 1500) {
 
   while (remaining.length > size) {
     let cutIndex = remaining.lastIndexOf("\n", size);
-    if (cutIndex === -1) cutIndex = size;
-
+    if (cutIndex === -1) {
+      cutIndex = size;
+    }
     chunks.push(remaining.slice(0, cutIndex).trim());
     remaining = remaining.slice(cutIndex).trim();
   }
 
-  if (remaining.length > 0) chunks.push(remaining);
-
+  if (remaining.length > 0) {
+    chunks.push(remaining);
+  }
   return chunks;
 }
 
