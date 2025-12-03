@@ -126,14 +126,11 @@ app.post("/chatfuel", async (req, res) => {
     conversationId = null;
   }
 
-  const userId = req.body.chatfuel_user_id;
+  const userId =
+    (req.body &&
+      (req.body.chatfuel_user_id || req.body.messenger_user_id)) ||
+    null;
 
-  //validating user id
-  if (!userId || typeof userId !== "string" || userId.trim() === "") {
-  console.warn("Missing or invalid userId, cannot continue follow-up.");
-  return; 
-  }
-  
   const extraInputs = (req.body && req.body.inputs) || {};
   const inputs = { from_channel: "chatfuel", ...extraInputs };
 
