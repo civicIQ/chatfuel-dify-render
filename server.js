@@ -1,5 +1,6 @@
-const express = require("express");
-const axios = require("axios");
+import { httpServerHandler } from "cloudflare:node";
+import express from "express";
+import axios from "axios";
 
 const app = express();
 app.use(express.json());
@@ -232,8 +233,5 @@ app.post("/chatfuel", async (req, res) => {
   }
 });
 
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+const server = app.listen(3000); // registers server in Workers (no real TCP bind)
+export default httpServerHandler(server);
