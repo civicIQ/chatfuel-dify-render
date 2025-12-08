@@ -26,6 +26,8 @@ function formatForMessenger(text) {
   const INDENT = "\u2003\u2003"; // two EM spaces
   result = result.replace(/^[\*\-]\s+/gm, `${INDENT}• `);
 
+  result = result.replace(/<a\s+href="([^"]+)"[^>]*>(.*?)<\/a>/g, "$2: $1");
+
   // 1) convert *italic* -> _italic_
   result = result.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1_$2_");
 
