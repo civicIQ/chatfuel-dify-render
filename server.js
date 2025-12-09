@@ -33,7 +33,8 @@ function formatForMessenger(text) {
   }
 
   let result = text;
-
+  //removing <a> tags
+  result = result.replace(/<\/?[^>]+>/g, "");
   // Detect URLs
   const urlRegex = /(https?:\/\/[^\s)]+)/g;
   const urls = [...new Set(result.match(urlRegex))];
