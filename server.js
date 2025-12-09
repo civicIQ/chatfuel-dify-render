@@ -30,23 +30,25 @@ function formatForMessenger(text) {
   const aTagRegex = /<a\s+href="([^"]+)"[^>]*>([^<]+)<\/a>/g;
   let match;
   const urls = [];
+  const texts = [];
   const urlMap = {};
   const superNums = ["¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹","¹⁰","¹¹","¹²","¹³","¹⁴","¹⁵"];
-
   let counter = 0;
+
   while ((match = aTagRegex.exec(result)) !== null) {
     const fullMatch = match[0];
     const url = match[1];
-    const textLink = match[2];
+    const citationText = match[2];
 
     if (!urlMap[url]) {
       urlMap[url] = superNums[counter] || `(${counter + 1})`;
       urls.push(url);
+      texts.push(citationText);
       counter++;
     }
 
     //replace the <a> tag in the text with the superscript number
-    result = result.replace(fullMatch, `${textLink}${urlMap[url]}`);
+    result = result.replace(fullMatch, urlMap[url]);
   }
 
   //remove any remaining HTML tags
@@ -67,7 +69,8 @@ function formatForMessenger(text) {
     result += "\n\n---\n";
     urls.forEach((url, i) => {
       const marker = superNums[i] || `(${i+1})`;
-      result += `${marker} ${url}\n`;
+      const text = texts[i];
+      result += `${marker} ${text} ${url}\n`;
     });
   }
 
