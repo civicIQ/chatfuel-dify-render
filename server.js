@@ -26,6 +26,22 @@ function formatForMessenger(text) {
   }
 
   let result = text;
+  //remove all html tags 
+  result = result.replace(/<\/?[^>]+>/g, "");
+  //extract all urls 
+  const urlRegex = /(https?:\/\/[^\s)]+[^\s.,)])/g;
+  const urls = [...new Set(result.match(urlRegex))] || [];
+  //citation numbers 
+  const superNums = ["¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹","¹⁰","¹¹","¹²","¹³","¹⁴","¹⁵"];
+  const urlMap = {};
+
+  urls.forEach((url, i) => {
+    urlMap[url] = superNums[i] || `(${i+1})`;
+  });
+  //replace urls with numbers 
+  Object.entries(urlMap).forEach(([url, marker]) => {
+    result = result.replace(url, marker);
+  });
 
   const INDENT = "\u2003\u2003"; // two EM spaces
   result = result.replace(/^[\*\-]\s+/gm, `${INDENT}• `);
@@ -35,9 +51,24 @@ function formatForMessenger(text) {
   // 2) then convert **bold** -> *bold*
   result = result.replace(/\*\*(.+?)\*\*/g, "*$1*");  
   // [label](url) -> label (url)
-  result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)");
+  result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => {
+    if (!urlMap[url]) {
+      const index = urls.length;
+      urls.push(url);
+      urlMap[url] = superNums[index] || `(${index+1})`;
+    }
+    return `${label} ${urlMap[url]}`;
+  });
   result = result.replace(/ +\n/g, "\n");
   result = result.replace(/\n{3,}/g, "\n\n");
+  //sources
+  if (urls.length > 0) {
+    result += "\n\n---\n";
+    urls.forEach((url, i) => {
+      const marker = superNums[i] || `(${i+1})`;
+      result += `${marker} ${url}\n`;
+    });
+  }
 
   return result.trim();
 }
