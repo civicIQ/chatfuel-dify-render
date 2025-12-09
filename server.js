@@ -18,22 +18,38 @@ if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN || !CHATFUEL_ANSWER_BLOCK_ID) {
   console.warn("Chatfuel broadcast env vars are not fully set");
 }
 
+//shorten urls 
+function shortenVisibleUrl(url, maxLength = 35) {
+  if (url.length <= maxLength) {
+    return url;
+  }
+  const visible = url.slice(0, maxLength - 1) + "…";
+  return visible;
+}
 //function to format messages 
 function formatForMessenger(text) {
-  if (!text) return text;
+  if (!text) {
+    return text;
+  }
 
   let result = text;
+
+  // Detect URLs
+  const urlRegex = /(https?:\/\/[^\s)]+)/g;
+  const urls = [...new Set(result.match(urlRegex))];
+  // Replace long URLs with shortened versions
+  for (const url of urls) {
+    const short = shortenVisibleUrl(url);
+    result = result.replace(url, short);
+  }
+
   const INDENT = "\u2003\u2003"; // two EM spaces
   result = result.replace(/^[\*\-]\s+/gm, `${INDENT}• `);
-
   result = result.replace(/<a\s+href="([^"]+)"[^>]*>(.*?)<\/a>/g, "$2: $1");
-
   // 1) convert *italic* -> _italic_
   result = result.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1_$2_");
-
   // 2) then convert **bold** -> *bold*
   result = result.replace(/\*\*(.+?)\*\*/g, "*$1*");  
-  
   // [label](url) -> label (url)
   result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)");
   result = result.replace(/ +\n/g, "\n");
