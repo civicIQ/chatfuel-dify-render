@@ -18,14 +18,7 @@ if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN || !CHATFUEL_ANSWER_BLOCK_ID) {
   console.warn("Chatfuel broadcast env vars are not fully set");
 }
 
-//shorten urls 
-function shortenVisibleUrl(url, maxLength = 35) {
-  if (url.length <= maxLength) {
-    return url;
-  }
-  const visible = url.slice(0, maxLength - 1) + "…";
-  return visible;
-}
+
 //function to format messages 
 function formatForMessenger(text) {
   if (!text) {
@@ -33,16 +26,6 @@ function formatForMessenger(text) {
   }
 
   let result = text;
-  //removing <a> tags
-  result = result.replace(/<\/?[^>]+>/g, "");
-  // Detect URLs
-  const urlRegex = /(https?:\/\/[^\s)]+)/g;
-  const urls = [...new Set(result.match(urlRegex))];
-  // Replace long URLs with shortened versions
-  for (const url of urls) {
-    const short = shortenVisibleUrl(url);
-    result = result.replace(url, short);
-  }
 
   const INDENT = "\u2003\u2003"; // two EM spaces
   result = result.replace(/^[\*\-]\s+/gm, `${INDENT}• `);
