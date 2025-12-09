@@ -83,7 +83,7 @@ function formatForMessenger(text) {
   if (citations.length > 0) {
     result += "\n\n---\n";
     citations.forEach(({ marker, url, label }) => {
-      result += `${marker} ${label} ${url}\n`;
+      result += `${marker} ${label} (${url})\n`;
     });
   }
 
