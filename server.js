@@ -19,37 +19,76 @@ if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN || !CHATFUEL_ANSWER_BLOCK_ID) {
 }
 
 
-//function to format messages 
+// function to format messages 
 function formatForMessenger(text) {
   if (!text) {
     return text;
   }
 
   let result = text;
-  //find all <a href="URL">text</a> links
-  const aTagRegex = /<a\s+href="([^"]+)"[^>]*>([^<]+)<\/a>/g;
-  let match;
-  const urls = [];
-  const texts = [];
-  const urlMap = {};
+
+  //citation numbers
   const superNums = ["¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹","¹⁰","¹¹","¹²","¹³","¹⁴","¹⁵"];
-  let counter = 0;
 
-  while ((match = aTagRegex.exec(result)) !== null) {
-    const fullMatch = match[0];
-    const url = match[1];
-    const citationText = match[2];
+  const citations = [];
+  const urlToMarker = {};
 
-    if (!urlMap[url]) {
-      urlMap[url] = superNums[counter] || `(${counter + 1})`;
-      urls.push(url);
-      texts.push(citationText);
-      counter++;
+  function registerCitation(url, label) {
+    if (!urlToMarker[url]) {
+      const idx = citations.length;
+      const marker = superNums[idx] || `[${idx + 1}]`;
+      urlToMarker[url] = marker;
+      citations.push({
+        marker,
+        url,
+        label: (label || "").trim() || "Source"
+      });
     }
-
-    //replace the <a> tag in the text with the superscript number
-    result = result.replace(fullMatch, urlMap[url]);
+    return urlToMarker[url];
   }
+
+  const aTagRegex = /<a\s+href="([^"]+)"[^>]*>([^<]+)<\/a>/gi;
+  result = result.replace(aTagRegex, (_, url, label) => {
+    const marker = registerCitation(url, label);
+    return marker; 
+  });
+
+  const bareUrlRegex = /https?:\/\/\S+/g;
+  result = result.replace(bareUrlRegex, (url) => {
+    const marker = registerCitation(url, "");
+    return marker; 
+  });
+
+  //remove any remaining HTML tags
+  result = result.replace(/<\/?[^>]+>/g, "");
+
+  //bullet formatting
+  const INDENT = "\u2003\u2003"; 
+  result = result.replace(/^[\*\-]\s+/gm, `${INDENT}• `);
+  //remove single *italic*
+  result = result.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1$2");
+  //remove **bold**
+  result = result.replace(/\*\*(.+?)\*\*/g, "$1");
+  //remove _italic_
+  result = result.replace(/_(.*?)_/g, "$1");
+
+  //delete any extra lines
+  result = result.replace(/ +\n/g, "\n");   
+  result = result.replace(/\n{3,}/g, "\n\n"); 
+
+  result = result.trim();
+
+  //add sources block
+  if (citations.length > 0) {
+    result += "\n\n---\n";
+    citations.forEach(({ marker, url, label }) => {
+      result += `${marker} ${label} ${url}\n`;
+    });
+  }
+
+  return result.trim();
+}
+
 
   //remove any remaining HTML tags
   result = result.replace(/<\/?[^>]+>/g, "");
