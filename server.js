@@ -26,22 +26,31 @@ function formatForMessenger(text) {
   }
 
   let result = text;
-  //remove all html tags 
-  result = result.replace(/<\/?[^>]+>/g, "");
-  //extract all urls 
-  const urlRegex = /(https?:\/\/[^\s)]+[^\s.,)])/g;
-  const urls = [...new Set(result.match(urlRegex))] || [];
-  //citation numbers 
-  const superNums = ["¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹","¹⁰","¹¹","¹²","¹³","¹⁴","¹⁵"];
+  //find all <a href="URL">text</a> links
+  const aTagRegex = /<a\s+href="([^"]+)"[^>]*>([^<]+)<\/a>/g;
+  let match;
+  const urls = [];
   const urlMap = {};
+  const superNums = ["¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹","¹⁰","¹¹","¹²","¹³","¹⁴","¹⁵"];
 
-  urls.forEach((url, i) => {
-    urlMap[url] = superNums[i] || `(${i+1})`;
-  });
-  //replace urls with numbers 
-  Object.entries(urlMap).forEach(([url, marker]) => {
-    result = result.replace(url, marker);
-  });
+  let counter = 0;
+  while ((match = aTagRegex.exec(result)) !== null) {
+    const fullMatch = match[0];
+    const url = match[1];
+    const textLink = match[2];
+
+    if (!urlMap[url]) {
+      urlMap[url] = superNums[counter] || `(${counter + 1})`;
+      urls.push(url);
+      counter++;
+    }
+
+    //replace the <a> tag in the text with the superscript number
+    result = result.replace(fullMatch, `${textLink}${urlMap[url]}`);
+  }
+
+  //remove any remaining HTML tags
+  result = result.replace(/<\/?[^>]+>/g, "");
 
   const INDENT = "\u2003\u2003"; // two EM spaces
   result = result.replace(/^[\*\-]\s+/gm, `${INDENT}• `);
@@ -50,15 +59,7 @@ function formatForMessenger(text) {
   result = result.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1_$2_");
   // 2) then convert **bold** -> *bold*
   result = result.replace(/\*\*(.+?)\*\*/g, "*$1*");  
-  // [label](url) -> label (url)
-  result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => {
-    if (!urlMap[url]) {
-      const index = urls.length;
-      urls.push(url);
-      urlMap[url] = superNums[index] || `(${index+1})`;
-    }
-    return `${label} ${urlMap[url]}`;
-  });
+  //clean up extra spaces or lines
   result = result.replace(/ +\n/g, "\n");
   result = result.replace(/\n{3,}/g, "\n\n");
   //sources
