@@ -75,6 +75,8 @@ function formatForMessenger(text) {
   result = result.replace(/ +\n/g, "\n");    
   result = result.replace(/\n{3,}/g, "\n\n"); 
   result = result.trim();
+  //remove parentheses around citation markers
+  result = result.replace(/\(\s*((?:[¹²³⁴⁵⁶⁷⁸⁹]|¹⁰|¹¹|¹²|¹³|¹⁴|¹⁵)(?:\s*;\s*(?:[¹²³⁴⁵⁶⁷⁸⁹]|¹⁰|¹¹|¹²|¹³|¹⁴|¹⁵))*)\s*\)/g, "$1");
 
   //sources block
   if (citations.length > 0) {
