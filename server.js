@@ -20,6 +20,7 @@ if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN || !CHATFUEL_ANSWER_BLOCK_ID) {
 
 
 // function to format messages 
+// function to format messages 
 function formatForMessenger(text) {
   if (!text) {
     return text;
@@ -27,7 +28,7 @@ function formatForMessenger(text) {
 
   let result = text;
 
-  //citation numbers
+  //markers for citations
   const superNums = ["¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹","¹⁰","¹¹","¹²","¹³","¹⁴","¹⁵"];
 
   const citations = [];
@@ -61,8 +62,6 @@ function formatForMessenger(text) {
 
   //remove any remaining HTML tags
   result = result.replace(/<\/?[^>]+>/g, "");
-
-  //bullet formatting
   const INDENT = "\u2003\u2003"; 
   result = result.replace(/^[\*\-]\s+/gm, `${INDENT}• `);
   //remove single *italic*
@@ -72,13 +71,12 @@ function formatForMessenger(text) {
   //remove _italic_
   result = result.replace(/_(.*?)_/g, "$1");
 
-  //delete any extra lines
-  result = result.replace(/ +\n/g, "\n");   
+  //delete any extra spaces
+  result = result.replace(/ +\n/g, "\n");    
   result = result.replace(/\n{3,}/g, "\n\n"); 
-
   result = result.trim();
 
-  //add sources block
+  //sources block
   if (citations.length > 0) {
     result += "\n\n---\n";
     citations.forEach(({ marker, url, label }) => {
@@ -89,32 +87,6 @@ function formatForMessenger(text) {
   return result.trim();
 }
 
-
-  //remove any remaining HTML tags
-  result = result.replace(/<\/?[^>]+>/g, "");
-
-  const INDENT = "\u2003\u2003"; // two EM spaces
-  result = result.replace(/^[\*\-]\s+/gm, `${INDENT}• `);
-  // result = result.replace(/<a\s+href="([^"]+)"[^>]*>(.*?)<\/a>/g, "$2: $1");
-  // 1) convert *italic* -> _italic_
-  result = result.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1_$2_");
-  // 2) then convert **bold** -> *bold*
-  result = result.replace(/\*\*(.+?)\*\*/g, "*$1*");  
-  //clean up extra spaces or lines
-  result = result.replace(/ +\n/g, "\n");
-  result = result.replace(/\n{3,}/g, "\n\n");
-  //sources
-  if (urls.length > 0) {
-    result += "\n\n---\n";
-    urls.forEach((url, i) => {
-      const marker = superNums[i] || `(${i+1})`;
-      const text = texts[i];
-      result += `${marker} ${text} ${url}\n`;
-    });
-  }
-
-  return result.trim();
-}
 
 //split into chunks for larger answers
 function splitIntoChunks(message, size = 1500) {
