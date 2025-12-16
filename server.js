@@ -20,7 +20,6 @@ if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN || !CHATFUEL_ANSWER_BLOCK_ID) {
 
 
 // function to format messages 
-// function to format messages 
 function formatForMessenger(text) {
   if (!text) {
     return text;
@@ -83,7 +82,8 @@ function formatForMessenger(text) {
   if (citations.length > 0) {
     result += "\n\n---\n";
     citations.forEach(({ marker, url, label }) => {
-      result += `${marker} ${label} (${url})\n`;
+      result += `${marker} <a href="${url}" style="color:blue;">${label}</a>\n`;
+      // result += `${marker} ${label} (${url})\n`;
     });
   }
 
