@@ -188,7 +188,7 @@ app.post("/chatfuel", async (req, res) => {
   res.json({
     messages: [
       {
-        text: "Thinking… I'll reply shortly!"
+        text: "Thinking…"
       }
     ]
   });
