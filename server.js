@@ -165,8 +165,13 @@ app.post("/chatfuel", async (req, res) => {
   const rawText =
     (req.body && (req.body.user_text || req.body["chatfuel user input"])) || "";
   const userText = String(rawText).trim();
-
-  let conversationId = (req.body && req.body.dify_conversation_id) || null;
+  const mode = req.body.mode || "organic";
+  let conversationId;
+  if (mode === "ads") {
+    conversationId = null;
+  } else {
+    conversationId = (req.body && req.body.dify_conversation_id) || null;
+  }
 
   if (
     !conversationId ||
