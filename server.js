@@ -14,9 +14,10 @@ const CHATFUEL_ANSWER_BLOCK_ID = process.env.CHATFUEL_ANSWER_BLOCK_ID;
 if (!DIFY_API_KEY) {
   console.warn("DIFY_API_KEY is not set");
 }
-if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN || !CHATFUEL_ANSWER_BLOCK_ID) {
-  console.warn("Chatfuel broadcast env vars are not fully set");
+if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN) {
+  console.warn("Chatfuel bot ID or token is not set");
 }
+
 
 
 // function to format messages 
@@ -165,7 +166,18 @@ app.post("/chatfuel", async (req, res) => {
   const rawText =
     (req.body && (req.body.user_text || req.body["chatfuel user input"])) || "";
   const userText = String(rawText).trim();
-  const mode = req.body.mode || "organic";
+  const flow = req.body.flow || "organic";
+  const answerBlockId =
+  req.body.answer_block_id || process.env.CHATFUEL_ANSWER_BLOCK_ID;
+  console.log("Incoming Chatfuel request", {
+    userId: req.body.chatfuel_user_id,
+    flow,
+    answerBlockId
+  });
+  if (!answerBlockId) {
+    console.warn("No answer_block_id provided; using fallback");
+  }
+  const mode = flow.startsWith("ads") ? "ads" : "organic";
   let conversationId;
   if (mode === "ads") {
     conversationId = null;
@@ -187,7 +199,12 @@ app.post("/chatfuel", async (req, res) => {
     null;
 
   const extraInputs = (req.body && req.body.inputs) || {};
-  const inputs = { from_channel: "chatfuel", ...extraInputs };
+  const inputs = {
+    from_channel: "chatfuel",
+    flow,
+    ...extraInputs
+  };
+
 
   //immediate response so Chatfuel doesn't show timeout
   res.json({
@@ -226,9 +243,9 @@ app.post("/chatfuel", async (req, res) => {
     const nextConversationId = dfy.data?.conversation_id || conversationId || "";
 
     //push final answer back to user
-    if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN || !CHATFUEL_ANSWER_BLOCK_ID) {
+    if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN) {
       console.warn(
-        "Chatfuel broadcast env vars missing; can't send final answer."
+        "Chatfuel bot ID or token missing; can't send final answer."
       );
       return;
     }
@@ -259,7 +276,7 @@ app.post("/chatfuel", async (req, res) => {
         {
           params: {
             chatfuel_token: CHATFUEL_TOKEN,
-            chatfuel_block_id: CHATFUEL_ANSWER_BLOCK_ID
+            chatfuel_block_id: answerBlockId
           },
           headers: {
             "Content-Type": "application/json"
