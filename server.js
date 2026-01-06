@@ -178,12 +178,8 @@ app.post("/chatfuel", async (req, res) => {
     console.warn("No answer_block_id provided; using fallback");
   }
   const mode = flow.startsWith("ads") ? "ads" : "organic";
-  let conversationId;
-  if (mode === "ads") {
-    conversationId = null;
-  } else {
-    conversationId = (req.body && req.body.dify_conversation_id) || null;
-  }
+  let conversationId = req.body.dify_conversation_id || `chatfuel_${userId}`;
+
 
   if (
     !conversationId ||
@@ -227,6 +223,7 @@ app.post("/chatfuel", async (req, res) => {
       query: userText,
       response_mode: "blocking", 
       user: String(userId),
+      conversation_id: conversationId,
       inputs
     };
     if (conversationId) payload.conversation_id = conversationId;
