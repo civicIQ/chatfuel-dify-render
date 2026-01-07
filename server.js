@@ -178,6 +178,10 @@ app.post("/chatfuel", async (req, res) => {
     console.warn("No answer_block_id provided; using fallback");
   }
   const mode = flow.startsWith("ads") ? "ads" : "organic";
+  const userId =
+    (req.body &&
+      (req.body.chatfuel_user_id || req.body.messenger_user_id)) ||
+    null;
   let conversationId = req.body.dify_conversation_id || `chatfuel_${userId}`;
 
 
@@ -189,10 +193,7 @@ app.post("/chatfuel", async (req, res) => {
     conversationId = null;
   }
 
-  const userId =
-    (req.body &&
-      (req.body.chatfuel_user_id || req.body.messenger_user_id)) ||
-    null;
+  
 
   const extraInputs = (req.body && req.body.inputs) || {};
   const inputs = {
