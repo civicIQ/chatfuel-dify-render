@@ -182,9 +182,7 @@ app.post("/chatfuel", async (req, res) => {
     (req.body &&
       (req.body.chatfuel_user_id || req.body.messenger_user_id)) ||
     null;
-  let conversationId = req.body.dify_conversation_id || `chatfuel_${userId}`;
-
-
+  let conversationId = req.body.dify_conversation_id;
   if (
     !conversationId ||
     String(conversationId).trim() === "" ||
@@ -224,7 +222,6 @@ app.post("/chatfuel", async (req, res) => {
       query: userText,
       response_mode: "blocking", 
       user: String(userId),
-      conversation_id: conversationId,
       inputs
     };
     if (conversationId) payload.conversation_id = conversationId;
