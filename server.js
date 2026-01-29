@@ -80,14 +80,19 @@ function formatForMessenger(text) {
   //replace ';'
   result = result.replace(/([¹²³⁴⁵⁶⁷⁸⁹]|¹⁰)(?:\s*;\s*)(?=[¹²³⁴⁵⁶⁷⁸⁹]|¹⁰)/g, "$1 ");
   //sources block
+  let sourcesText = "";
+
   if (citations.length > 0) {
-    result += "\n\n---\n";
     citations.forEach(({ marker, url, label }) => {
-      result += `${marker} ${label} (${url})\n`;
+      sourcesText += `${marker} ${label}\n${url}\n\n`;
     });
   }
 
-  return result.trim();
+  return {
+    answer: result.trim(),
+    sources: sourcesText.trim()
+  };
+
 }
 
 
@@ -233,7 +238,10 @@ app.post("/chatfuel", async (req, res) => {
       dfy.data?.outputs?.text ??
       "No answer returned from Dify.";
 
-    const ans = formatForMessenger(rawAns);
+    const formatted = formatForMessenger(rawAns);
+    const answerText = formatted.answer;
+    const sourcesText = formatted.sources || "No sources provided.";
+
 
     const nextConversationId = dfy.data?.conversation_id || conversationId || "";
 
@@ -249,7 +257,7 @@ app.post("/chatfuel", async (req, res) => {
       userId
     )}/send`;
 
-    const chunks = splitIntoChunks(ans, 1500);
+    const chunks = splitIntoChunks(answerText, 1500);
     console.log(
       "About to broadcast answer",
       {
@@ -266,6 +274,7 @@ app.post("/chatfuel", async (req, res) => {
         broadcastUrl,
         {
           dify_answer: chunk,
+          dify_sources: sourcesText,
           dify_conversation_id: nextConversationId
         },
         {
