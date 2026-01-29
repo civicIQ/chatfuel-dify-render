@@ -23,7 +23,10 @@ if (!CHATFUEL_BOT_ID || !CHATFUEL_TOKEN) {
 // function to format messages 
 function formatForMessenger(text) {
   if (!text) {
-    return text;
+    return {
+      answer: "",
+      sources: ""
+    };
   }
 
   let result = text;
@@ -263,7 +266,7 @@ app.post("/chatfuel", async (req, res) => {
       {
         userId,
         nextConversationId,
-        totalLength: ans.length,
+        totalLength: answerText.length,
         chunks: chunks.length
       }
     );
